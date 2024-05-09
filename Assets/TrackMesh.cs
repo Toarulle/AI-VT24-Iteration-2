@@ -7,7 +7,7 @@ using UnityEngine;
 public class TrackMesh : MonoBehaviour
 {
     [SerializeField] private TrackMaker track;
-    [SerializeField] private float trackWidth = 1f;
+    public float trackWidth = 1f;
     private Mesh mesh;
     private MeshFilter meshFilter;
 
@@ -27,7 +27,8 @@ public class TrackMesh : MonoBehaviour
         transform.position = track.transform.position;
     }
 
-    private void UpdateMesh()
+    [ContextMenu("Update Mesh")]
+    public void UpdateMesh()
     {
         if (mesh != null)
         {
@@ -40,7 +41,7 @@ public class TrackMesh : MonoBehaviour
         Vector2 point = points[0];
         Vector2 secondPoint = points[1];
         mesh = MeshUtils.CreateLineMesh((Vector3)point - transform.position, (Vector3)secondPoint - transform.position, Vector3.back, trackWidth);
-
+        mesh.name = "Trackmesh";
         for (int i = 2; i < points.Count+2; i++)
         {
             Vector2 thisPoint = points[i%points.Count];

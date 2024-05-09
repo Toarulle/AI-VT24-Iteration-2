@@ -5,35 +5,57 @@ using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public class TrackMaker : MonoBehaviour
 {
-    [SerializeField] private int seed;
+    [Header("Basesettings")]
+    public int seed;
     [SerializeField] private GameObject ground;
-    [SerializeField] private int groundWidthOffset;
-    [SerializeField] private int groundHeightOffset;
-    [SerializeField] private int dotMiddle = 15;
-    [SerializeField] private int dotSpread = 5;
-    [SerializeField][Range(0.02f,20f)] private float difficulty = 1f;
-    [SerializeField] private float maxDisplacement = 1f;
-    [SerializeField] private int pushIterations = 5;
-    [SerializeField] private int pushSmallestDistance = 5;
-    [SerializeField] private int largestTurnDegrees = 100;
-    [SerializeField] private int fixAngleIterations = 10;
-    [SerializeField] private int smoothingSteps = 5;
+    public float groundWidth;
+    public float groundHeight;
+    public int groundWidthOffset;
+    public int groundHeightOffset;
+    [Header("Dotspreading")]
+    public int dotAmountMiddle = 15;
+    public int dotAmountSpread = 5;
+    [Header("Displacement")]
+    [Range(0.02f,20f)] public float difficulty = 1f;
+    public float maxDisplacement = 1f;
+    [Header("Push apart")]
+    public int pushIterations = 5;
+    public int pushSmallestDistance = 5;
+    [Header("Fix angles")]
+    public int largestTurnDegrees = 100;
+    public int fixAngleIterations = 10;
+    [Header("CatmullRom")]
+    public int smoothingSteps = 5;
+    public int divideByIfClose = 4;
+    [Header("Gizmos")] 
     [SerializeField] private bool showGizmos = true;
+    [SerializeField] private bool drawPoints, drawHull, drawSmoothHull, drawPath;
+    [Header("Gridsettings")]
+    [SerializeField] private GameObject startgrid;
 
     public UnityAction MapChange = delegate {};
-
-    private float height = 10;
-    private float width = 10;
+    
     private List<Vector2> points, hull, smoothHull;
-    [SerializeField] private bool drawPoints, drawHull, drawSmoothHull, drawPath;
+    private int currentStartgridIndex = 0;
     
     void Start()
     {
-        NewMapNewSeed();
+        groundHeight = ground.transform.localScale.y/2;
+        groundWidth = ground.transform.localScale.x/2;
+        
+        if (seed == 0)
+        {
+            NewMapNewSeed();
+        }
+        else
+        {
+            NewMap();
+        }
     }
 
     public List<Vector2> GetListOfPoints()
@@ -51,37 +73,64 @@ public class TrackMaker : MonoBehaviour
     [ContextMenu("New Map - Current seed")]
     public void NewMap()
     {
-        height = ground.transform.localScale.y/2;
-        width = ground.transform.localScale.x/2;
+        var newScale = new Vector3(groundWidth * 2, groundHeight * 2, 1);
+        ground.transform.localScale = newScale;
         points = new List<Vector2>();
         hull = new List<Vector2>();
         Random.InitState(seed);
-        int pointCount = Random.Range(dotMiddle - dotSpread, dotMiddle + dotSpread);
+        int pointCount = Random.Range(dotAmountMiddle - dotAmountSpread, dotAmountMiddle + dotAmountSpread);
         for (int i = 0; i < pointCount; i++)
         {
-            float x = Random.Range(-width+groundWidthOffset, width-groundWidthOffset);
-            float y = Random.Range(-height+groundHeightOffset, height-groundHeightOffset);
+            float x = Random.Range(-groundWidth+groundWidthOffset, groundWidth-groundWidthOffset);
+            float y = Random.Range(-groundHeight+groundHeightOffset, groundHeight-groundHeightOffset);
             points.Add(new Vector2(x,y));
         }
+
         hull = ConvexHull(points, pointCount);
-        
+
         for (int i = 0; i < pushIterations; i++)
         {
             PushApart(ref hull);
         }
+    
         CurvesAndDisplacement(ref hull);
-        Debug.Log($"{hull.First()}");
-
+        for (int i = 0; i < pushIterations; i++)
+        {
+            PushApart(ref hull);
+        }
         for (int i = 0; i < fixAngleIterations; i++)
         {
             CheckAngles(ref hull);
             PushApart(ref hull);
         }
-
         smoothHull = CatmullRomSpline(hull);
         MapChange.Invoke();
+        SetStartGrid(0);
     }
 
+    public void MoveStartGrid()
+    {
+        currentStartgridIndex++;
+        SetStartGrid(currentStartgridIndex);
+    }
+    private void SetStartGrid(int index = 0)
+    {
+        if (startgrid == null)
+            return;
+
+        currentStartgridIndex = index;
+        startgrid.transform.position = hull[currentStartgridIndex];
+        int indexSamePosSmooth = smoothHull.FindIndex(item => item == hull[currentStartgridIndex]);
+        if (indexSamePosSmooth == -1)
+            Debug.LogWarning("Didn't find matching item in smoothHull list");
+        Vector2 forward = (smoothHull[indexSamePosSmooth + 1 % smoothHull.Count] - smoothHull[indexSamePosSmooth])
+            .normalized;
+        startgrid.transform.up = forward;
+        var currentScale = startgrid.transform.localScale;
+        currentScale.x = GetComponent<TrackMesh>().trackWidth;
+        startgrid.transform.localScale = currentScale;
+    }
+    
     private List<Vector2> CatmullRomSpline(List<Vector2> dataset)
     {
         List<Vector2> smoothed = new List<Vector2>();
@@ -92,10 +141,15 @@ public class TrackMaker : MonoBehaviour
             Vector2 p1 = dataset[i];
             Vector2 p2 = dataset[ClampListPos(dataset,i+1)];
             Vector2 p3 = dataset[ClampListPos(dataset,i+2)];
-            
-            float res = 1f / smoothingSteps;
 
-            for (int j = 1; j < smoothingSteps; j++)
+            int steps = smoothingSteps;
+            if (Vector2.Distance(p1, p2) < maxDisplacement)
+            {
+                steps /= divideByIfClose;
+            }
+            float res = 1f / steps;
+            
+            for (int j = 0; j < steps; j++)
             {
                 float t = j * res;
 
@@ -143,11 +197,10 @@ public class TrackMaker : MonoBehaviour
             nx /= ndist;
             ny /= ndist;
 
-            //float a = Vector2.Dot(Vector2.Perpendicular(dataset[prev]), dataset[next]);
             float a = Mathf.Atan2(px * ny - py * nx, px * nx + py * ny);
             if(Mathf.Abs(a*Mathf.Rad2Deg) <= largestTurnDegrees) continue;
-            float nA = largestTurnDegrees * Mathf.Sign(a) * Mathf.Deg2Rad;
-            float angleDiff = nA - a;
+            float newA = largestTurnDegrees * Mathf.Sign(a) * Mathf.Deg2Rad;
+            float angleDiff = newA - a;
             float cos = Mathf.Cos(angleDiff);
             float sin = Mathf.Sin(angleDiff);
             float newX = nx * cos - ny * sin;
@@ -171,16 +224,39 @@ public class TrackMaker : MonoBehaviour
             displacement *= dispLength;
             Vector2 midPoint = (dataset[i] + dataset[(i + 1) % dataset.Count]) / 2;
             midPoint += displacement;
+            if (Vector2.Distance(midPoint, dataset[i]) < maxDisplacement)
+            {
+                Debug.Log("Not big");
+                int loops = 0;
+                var angle = Vector2.Angle(dataset[(i + 1) % dataset.Count] - dataset[i], midPoint);
+                while (angle < 60)
+                {
+                    Debug.Log($"Loop, tiny angle: {angle}");
+                    dispLength = Mathf.Pow(Random.Range(0f, 1f), difficulty) * maxDisplacement;
+                    displacement = Vector2.up;
+                    displacement = Rotate(displacement, Random.Range(0,360f));
+                    displacement *= dispLength;
+                    midPoint = (dataset[i] + dataset[(i + 1) % dataset.Count]) / 2;
+                    midPoint += displacement;
+                    angle = Vector2.Angle(dataset[(i + 1) % dataset.Count] - dataset[i], midPoint);
+                    if (loops++ >= 10)
+                    {
+                        Debug.Log("Still tiny angle");
+                        dispLength = Mathf.Pow(Random.Range(0f, 1f), difficulty) * maxDisplacement;
+                        displacement = (dataset[i] + dataset[(i + 1) % dataset.Count]).normalized;
+                        displacement = (midPoint - dataset[i] + midPoint - dataset[(i + 1) % dataset.Count]).normalized;
+                        displacement *= dispLength;
+                        midPoint = (dataset[i] + dataset[(i + 1) % dataset.Count]) / 2;
+                        midPoint += displacement;
+                        break;
+                    }
+                }
+            }
             newDataset.Add(dataset[i]);
             newDataset.Add(midPoint);
         }
 
         dataset = newDataset;
-
-        for (int i = 0; i < pushIterations; i++)
-        {
-            PushApart(ref dataset);
-        }
     }
     
     private void PushApart(ref List<Vector2> dataSet)
@@ -192,7 +268,7 @@ public class TrackMaker : MonoBehaviour
         {
             for (int j = i+1; j < dataSet.Count; j++)
             {
-                if ((dataSet[i]-dataSet[j]).sqrMagnitude < dist2)
+                if ((dataSet[i]-dataSet[j]).sqrMagnitude < dist)
                 {
                     float deltaX = dataSet[j].x - dataSet[i].x;
                     float deltaY = dataSet[j].y - dataSet[i].y;
@@ -233,7 +309,7 @@ public class TrackMaker : MonoBehaviour
 
             for (int i = 0; i < length; i++)
             {
-                if (Orientation(points[p],points[i],points[q]) == Random.Range(1,3))
+                if (Orientation(points[p],points[i],points[q]) == 2)
                 {
                     q = i;
                 }
@@ -267,10 +343,10 @@ public class TrackMaker : MonoBehaviour
         if (!showGizmos)
             return;
 
-        Vector2 topRight = new Vector2(width - groundWidthOffset, height - groundHeightOffset);
-        Vector2 bottomRight = new Vector2(width - groundWidthOffset, -height + groundHeightOffset);
-        Vector2 topLeft = new Vector2(-width + groundWidthOffset, height - groundHeightOffset);
-        Vector2 bottomLeft = new Vector2(-width + groundWidthOffset, -height + groundHeightOffset);
+        Vector2 topRight = new Vector2(groundWidth - groundWidthOffset, groundHeight - groundHeightOffset);
+        Vector2 bottomRight = new Vector2(groundWidth - groundWidthOffset, -groundHeight + groundHeightOffset);
+        Vector2 topLeft = new Vector2(-groundWidth + groundWidthOffset, groundHeight - groundHeightOffset);
+        Vector2 bottomLeft = new Vector2(-groundWidth + groundWidthOffset, -groundHeight + groundHeightOffset);
         Gizmos.DrawLine(topRight, topLeft);
         Gizmos.DrawLine(topRight, bottomRight);
         Gizmos.DrawLine(bottomLeft, bottomRight);
