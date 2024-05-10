@@ -11,43 +11,138 @@ using Random = UnityEngine.Random;
 public class TrackMaker : MonoBehaviour
 {
     [Header("Basesettings")]
-    public int seed;
+    [SerializeField] private int seed;
     [SerializeField] private GameObject ground;
-    public float groundWidth;
-    public float groundHeight;
-    public int groundWidthOffset;
-    public int groundHeightOffset;
+    [SerializeField] private float groundWidth;
+    [SerializeField] private float groundHeight;
+    [SerializeField] private int groundWidthOffset;
+    [SerializeField] private int groundHeightOffset;
     [Header("Dotspreading")]
-    public int dotAmountMiddle = 15;
-    public int dotAmountSpread = 5;
+    [SerializeField] private int dotAmountMiddle = 15;
+    [SerializeField] private int dotAmountSpread = 5;
     [Header("Displacement")]
-    [Range(0.02f,20f)] public float difficulty = 1f;
-    public float maxDisplacement = 1f;
+    [Range(0.02f,20f)] [SerializeField] private float difficulty = 1f;
+    [SerializeField] private float maxDisplacement = 1f;
     [Header("Push apart")]
-    public int pushIterations = 5;
-    public int pushSmallestDistance = 5;
+    [SerializeField] private int pushIterations = 5;
+    [SerializeField] private int pushSmallestDistance = 5;
     [Header("Fix angles")]
-    public int largestTurnDegrees = 100;
-    public int fixAngleIterations = 10;
+    [SerializeField] private int largestTurnDegrees = 100;
+    [SerializeField] private int fixAngleIterations = 10;
     [Header("CatmullRom")]
-    public int smoothingSteps = 5;
-    public int divideByIfClose = 4;
+    [SerializeField] private int smoothingSteps = 5;
+    [SerializeField] private int subtractIfClose = 4;
     [Header("Gizmos")] 
     [SerializeField] private bool showGizmos = true;
     [SerializeField] private bool drawPoints, drawHull, drawSmoothHull, drawPath;
     [Header("Gridsettings")]
     [SerializeField] private GameObject startgrid;
+    [Header("Car")]
+    [SerializeField] private GameObject racecar;
+    [SerializeField] private float carDistanceToGrid;
 
     public UnityAction MapChange = delegate {};
     
     private List<Vector2> points, hull, smoothHull;
     private int currentStartgridIndex = 0;
-    
-    void Start()
+    public int Seed
+    {
+        get => seed;
+        set => seed = value;
+    }
+
+    public float GroundWidth
+    {
+        get => groundWidth;
+        set => groundWidth = value;
+    }
+
+    public float GroundHeight
+    {
+        get => groundHeight;
+        set => groundHeight = value;
+    }
+
+    public float GroundHeightOffset
+    {
+        get => groundHeightOffset;
+        set => groundHeightOffset = (int)value;
+    }
+
+    public float GroundWidthOffset
+    {
+        get => groundWidthOffset;
+        set => groundWidthOffset = (int)value;
+    }
+
+    public float DotAmountMiddle
+    {
+        get => dotAmountMiddle;
+        set => dotAmountMiddle = (int)value;
+    }
+
+    public float DotAmountSpread
+    {
+        get => dotAmountSpread;
+        set => dotAmountSpread = (int)value;
+    }
+
+    public float Difficulty
+    {
+        get => difficulty;
+        set => difficulty = (int)value;
+    }
+
+    public float MaxDisplacement
+    {
+        get => maxDisplacement;
+        set => maxDisplacement = (int)value;
+    }
+
+    public float PushIterations
+    {
+        get => pushIterations;
+        set => pushIterations = (int)value;
+    }
+
+    public float PushSmallestDistance
+    {
+        get => pushSmallestDistance;
+        set => pushSmallestDistance = (int)value;
+    }
+
+    public float LargestTurnDegrees
+    {
+        get => largestTurnDegrees;
+        set => largestTurnDegrees = (int)value;
+    }
+
+    public float FixAngleIterations
+    {
+        get => fixAngleIterations;
+        set => fixAngleIterations = (int)value;
+    }
+
+    public float SmoothingSteps
+    {
+        get => smoothingSteps;
+        set => smoothingSteps = (int)value;
+    }
+
+    public float SubtractIfClose
+    {
+        get => subtractIfClose;
+        set => subtractIfClose = (int)value;
+    }
+
+    private void Awake()
     {
         groundHeight = ground.transform.localScale.y/2;
         groundWidth = ground.transform.localScale.x/2;
-        
+    }
+
+    void Start()
+    {
         if (seed == 0)
         {
             NewMapNewSeed();
@@ -126,8 +221,11 @@ public class TrackMaker : MonoBehaviour
         Vector2 forward = (smoothHull[indexSamePosSmooth + 1 % smoothHull.Count] - smoothHull[indexSamePosSmooth])
             .normalized;
         startgrid.transform.up = forward;
+        racecar.transform.position = (Vector3)hull[currentStartgridIndex]+Vector3.back*0.5f;
+        racecar.transform.up = forward;
+        racecar.transform.Translate(-racecar.transform.up*carDistanceToGrid,Space.World);
         var currentScale = startgrid.transform.localScale;
-        currentScale.x = GetComponent<TrackMesh>().trackWidth;
+        currentScale.x = GetComponent<TrackMesh>().TrackWidth;
         startgrid.transform.localScale = currentScale;
     }
     
@@ -145,7 +243,7 @@ public class TrackMaker : MonoBehaviour
             int steps = smoothingSteps;
             if (Vector2.Distance(p1, p2) < maxDisplacement)
             {
-                steps /= divideByIfClose;
+                steps -= subtractIfClose;
             }
             float res = 1f / steps;
             

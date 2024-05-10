@@ -7,14 +7,9 @@ using UnityEngine.Serialization;
 public class CarBehaviour : MonoBehaviour
 {
     [SerializeField][Range(0,20)] private int steeringWhenNotMovingFactor;
-    [SerializeField] private float acceleration;
-    [SerializeField] private float maxSpeed;
-    [SerializeField] private float brakeFactor;
+    [SerializeField] private CarStats carStats;
     [SerializeField] private float engineBrakingFactor;
     [SerializeField] private float engineBrakingSpeed;
-    [SerializeField] private float boostMultiplier;
-    [SerializeField] private float turnSpeed;
-    [SerializeField][Range(0,1)] private float drift;
     [SerializeField] private float cameraWindowSize = 15;
     private float horizontal;
     private float vertical;
@@ -26,6 +21,11 @@ public class CarBehaviour : MonoBehaviour
     private float velocityForward;
     private bool lastDirForward = false;
 
+    public void SetStatValues(CarStats newStats)
+    {
+        carStats = newStats;
+    }
+    
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -54,11 +54,11 @@ public class CarBehaviour : MonoBehaviour
         else if (velocityForward == 0 && vertical == 0 && lastDirForward)
             lastDirForward = false;
         
-        if (velocityForward > maxSpeed && vertical > 0)
+        if (velocityForward > carStats.maxSpeed && vertical > 0)
             return;
-        if (velocityForward < -maxSpeed * 0.5f && vertical < 0)
+        if (velocityForward < -carStats.maxSpeed * 0.5f && vertical < 0)
             return;
-        if (rb.velocity.sqrMagnitude > maxSpeed*maxSpeed && vertical > 0)
+        if (rb.velocity.sqrMagnitude > carStats.maxSpeed*carStats.maxSpeed && vertical > 0)
             return;
         
         if (vertical == 0)
@@ -67,13 +67,13 @@ public class CarBehaviour : MonoBehaviour
         }
         else rb.drag = 0;
         
-        float acc = acceleration;
+        float acc = carStats.acceleration;
         if (boostKey)
-            acc *= boostMultiplier;
+            acc *= carStats.boostMultiplier;
         if (vertical < 0)
-            acc *= brakeFactor;
+            acc *= carStats.brakeFactor;
         if (velocityForward < 0 && vertical > 0)
-            acc *= brakeFactor;
+            acc *= carStats.brakeFactor;
 
         if (lastDirForward && vertical < 0)
         {
@@ -98,7 +98,7 @@ public class CarBehaviour : MonoBehaviour
     {
         float turnWithoutSpeed = rb.velocity.magnitude / steeringWhenNotMovingFactor;
         turnWithoutSpeed = Mathf.Clamp01(turnWithoutSpeed);
-        rot -= horizontal * turnSpeed * turnWithoutSpeed;
+        rot -= horizontal * carStats.turnSpeed * turnWithoutSpeed;
         rb.MoveRotation(rot);
     }
     
@@ -107,6 +107,6 @@ public class CarBehaviour : MonoBehaviour
         Vector2 forwardVel = transform.up * Vector2.Dot(rb.velocity, transform.up);
         Vector2 rightVel = transform.right * Vector2.Dot(rb.velocity, transform.right);
 
-        rb.velocity = forwardVel + rightVel * drift;
+        rb.velocity = forwardVel + rightVel * carStats.drift;
     }
 }

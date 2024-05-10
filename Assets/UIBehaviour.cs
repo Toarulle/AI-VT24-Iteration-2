@@ -11,31 +11,51 @@ public class UIBehaviour : MonoBehaviour
     [SerializeField] private TrackMesh trackMesh;
 
     [Header("Basesettings")]
-    [SerializeField] private TextMeshProUGUI seedText;
+    [SerializeField] private TMP_InputField seedText;
     [SerializeField] private SliderHandler groundWidthSlider; 
     [SerializeField] private SliderHandler groundHeightSlider;
-    [SerializeField] private Slider groundWidthOffsetSlider; 
-    [SerializeField] private Slider groundHeightOffsetSlider;
+    [SerializeField] private SliderHandler groundWidthOffsetSlider; 
+    [SerializeField] private SliderHandler groundHeightOffsetSlider;
     [Header("Dotspreading")] 
-    [SerializeField] private Slider dotAmountMiddleSlider;
-    [SerializeField] private Slider dotAmountSpreadSlider;
+    [SerializeField] private SliderHandler dotAmountMiddleSlider;
+    [SerializeField] private SliderHandler dotAmountSpreadSlider;
     [Header("Displacement")]
-    [SerializeField] private Slider difficultySlider;
-    [SerializeField] private Slider maxDisplacement;
+    [SerializeField] private SliderHandler difficultySlider;
+    [SerializeField] private SliderHandler maxDisplacement;
     [Header("Push apart")]
-    [SerializeField] private Slider pushIterations;
-    [SerializeField] private Slider pushWhenDistance;
+    [SerializeField] private SliderHandler pushIterations;
+    [SerializeField] private SliderHandler pushWhenDistance;
     [Header("Fix angles")]
-    [SerializeField] private Slider angleFixIterations;
-    [SerializeField] private Slider largestAngle;
+    [SerializeField] private SliderHandler angleFixIterations;
+    [SerializeField] private SliderHandler largestAngle;
     [Header("CatmullRom")]
-    [SerializeField] private Slider smoothingSteps;
-    [SerializeField] private Slider divideByIfClose;
-
+    [SerializeField] private SliderHandler smoothingSteps;
+    [SerializeField] private SliderHandler subtractIfClose;
+    [Header("Track")]
+    [SerializeField] private SliderHandler trackWidth;
+    
     private void Start()
     {
-        seedText.text = trackMaker.seed.ToString();
-        groundWidthSlider.UpdateValue(trackMaker.groundWidth);
-        groundHeightSlider.UpdateValue(trackMaker.groundHeight);
+        seedText.text = trackMaker.Seed.ToString();
+        groundWidthSlider.UpdateValue(trackMaker.GroundWidth);
+        groundHeightSlider.UpdateValue(trackMaker.GroundHeight);
+        groundWidthOffsetSlider.UpdateValue(trackMaker.GroundWidthOffset);
+        groundHeightOffsetSlider.UpdateValue(trackMaker.GroundHeightOffset);
+        dotAmountMiddleSlider.UpdateValue(trackMaker.DotAmountMiddle);
+        dotAmountSpreadSlider.UpdateValue(trackMaker.DotAmountSpread);
+        difficultySlider.UpdateValue(trackMaker.Difficulty);
+        maxDisplacement.UpdateValue(trackMaker.MaxDisplacement);
+        pushIterations.UpdateValue(trackMaker.PushIterations);
+        pushWhenDistance.UpdateValue(trackMaker.PushSmallestDistance);
+        angleFixIterations.UpdateValue(trackMaker.FixAngleIterations);
+        largestAngle.UpdateValue(trackMaker.LargestTurnDegrees);
+        smoothingSteps.UpdateValue(trackMaker.SmoothingSteps);
+        subtractIfClose.UpdateValue(trackMaker.SubtractIfClose);
+        trackWidth.UpdateValue(trackMesh.TrackWidth);
+    }
+
+    public void UpdateSeedText()
+    {
+        seedText.text = trackMaker.Seed.ToString();
     }
 }

@@ -7,9 +7,15 @@ using UnityEngine;
 public class TrackMesh : MonoBehaviour
 {
     [SerializeField] private TrackMaker track;
-    public float trackWidth = 1f;
+    [SerializeField] private float trackWidth = 1f;
     private Mesh mesh;
     private MeshFilter meshFilter;
+
+    public float TrackWidth
+    {
+        get => trackWidth;
+        set => trackWidth = value;
+    }
 
     private void Awake()
     {

@@ -10,11 +10,9 @@ public class SliderHandler : MonoBehaviour
 {
     private Slider slider;
     private TextMeshProUGUI valueText;
-    private UIBehaviour ui;
 
     private void Start()
     {
-        ui = GetComponentInParent<UIBehaviour>();
         slider = GetComponentInChildren<Slider>();
         var textList = GetComponentsInChildren<TextMeshProUGUI>();
         foreach (var item in textList)
@@ -28,8 +26,11 @@ public class SliderHandler : MonoBehaviour
 
     public void UpdateValue(float newValue)
     {
+        if (slider == null)
+        {
+            Start();
+        }
         slider.value = newValue;
-        UpdateValueText(newValue.ToString());
     }
 
     private void UpdateValueText(string text)
@@ -37,9 +38,8 @@ public class SliderHandler : MonoBehaviour
         valueText.text = text;
     }
     
-    public void NewValueFromSlider()
+    public void UpdateValueText(float value)
     {
-        UpdateValueText(slider.value.ToString());
-        
+        valueText.text = value.ToString();
     }
 }
