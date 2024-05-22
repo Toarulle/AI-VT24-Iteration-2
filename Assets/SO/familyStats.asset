@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   acceleration: 3
   maxSpeed: 20
-  brakeFactor: 3.5
+  brakeFactor: 2.5
   boostMultiplier: 2
-  turnSpeed: 3
+  turnSpeed: 4
   drift: 0.75
+  engineSound: {fileID: 8300000, guid: 466f875b4df56a54aa1554b702bb01c2, type: 3}

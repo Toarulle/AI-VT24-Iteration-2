@@ -41,6 +41,7 @@ public class TrackMaker : MonoBehaviour
     [SerializeField] private GameObject racecar;
     [SerializeField] private float carDistanceToGrid;
 
+    private BoxCollider2D startCollider;
     public UnityAction MapChange = delegate {};
     
     private List<Vector2> points, hull, smoothHull;
@@ -153,6 +154,7 @@ public class TrackMaker : MonoBehaviour
         }
     }
 
+    public List<Vector2> SmoothHull => smoothHull;
     public List<Vector2> GetListOfPoints()
     {
         return smoothHull;
@@ -163,6 +165,11 @@ public class TrackMaker : MonoBehaviour
     {
         seed = Random.Range(1000000, 9999999);
         NewMap();
+    }
+
+    public void SetSeed(string value)
+    {
+        seed = int.Parse(value);
     }
     
     [ContextMenu("New Map - Current seed")]
@@ -203,11 +210,21 @@ public class TrackMaker : MonoBehaviour
         SetStartGrid(0);
     }
 
-    public void MoveStartGrid()
+    public void MoveStartGridNext()
     {
-        currentStartgridIndex++;
+        currentStartgridIndex = (currentStartgridIndex + 1)%hull.Count;
         SetStartGrid(currentStartgridIndex);
     }
+    public void MoveStartGridPrev()
+    {
+        currentStartgridIndex = (currentStartgridIndex - 1)%hull.Count;
+        if (currentStartgridIndex < 0)
+        {
+            currentStartgridIndex = hull.Count - 1;
+        }
+        SetStartGrid(currentStartgridIndex);
+    }
+    
     private void SetStartGrid(int index = 0)
     {
         if (startgrid == null)
@@ -222,11 +239,16 @@ public class TrackMaker : MonoBehaviour
             .normalized;
         startgrid.transform.up = forward;
         racecar.transform.position = (Vector3)hull[currentStartgridIndex]+Vector3.back*0.5f;
-        racecar.transform.up = forward;
+        racecar.transform.up = -forward;
         racecar.transform.Translate(-racecar.transform.up*carDistanceToGrid,Space.World);
         var currentScale = startgrid.transform.localScale;
         currentScale.x = GetComponent<TrackMesh>().TrackWidth;
         startgrid.transform.localScale = currentScale;
+    }
+
+    public void SetCarPos()
+    {
+        SetStartGrid(currentStartgridIndex);
     }
     
     private List<Vector2> CatmullRomSpline(List<Vector2> dataset)

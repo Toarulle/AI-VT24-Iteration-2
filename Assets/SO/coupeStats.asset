@@ -18,3 +18,4 @@ MonoBehaviour:
   boostMultiplier: 3
   turnSpeed: 4.5
   drift: 0.94
+  engineSound: {fileID: 8300000, guid: 1c3e08d7656068b43b4dd7bb403d070b, type: 3}

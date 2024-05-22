@@ -57,7 +57,7 @@ public class TrackMesh : MonoBehaviour
 
         meshFilter.mesh = mesh;
     }
-
+    
     private void OnEnable()
     {
         track.MapChange += UpdateMesh;
@@ -66,4 +66,5 @@ public class TrackMesh : MonoBehaviour
     {
         track.MapChange -= UpdateMesh;
     }
+    
 }

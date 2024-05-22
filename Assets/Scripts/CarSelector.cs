@@ -11,11 +11,22 @@ public class CarSelector : MonoBehaviour
     [SerializeField] private Image carDisplay;
     [SerializeField] private SpriteRenderer carOnGroundSprite;
     [SerializeField] private CarBehaviour carOnGroundBehaviour;
+    [SerializeField] private TextMeshProUGUI carTypeText;
+    [SerializeField] private TextMeshProUGUI carColorText;
     [SerializeField] private List<Sprite> carSprites;
     [SerializeField] private List<CarStats> carStats;
     [SerializeField] private Slider acceleration;
-    [SerializeField] private float minAcceleration;
-    [SerializeField] private float maxAcceleration;
+    [SerializeField] private float minAcceleration, maxAcceleration;
+    [SerializeField] private Slider maxSpeed;
+    [SerializeField] private float minMaxSpeed, maxMaxSpeed;
+    [SerializeField] private Slider braking;
+    [SerializeField] private float minBraking, maxBraking;
+    [SerializeField] private Slider boost;
+    [SerializeField] private float minBoost, maxBoost;
+    [SerializeField] private Slider handling;
+    [SerializeField] private float minHandling, maxHandling;
+    [SerializeField] private Slider drift;
+    [SerializeField] private float minDrift, maxDrift;
     
     private int currentCarType = 0;
     private int currentCarColor = 0;
@@ -23,20 +34,43 @@ public class CarSelector : MonoBehaviour
     private void Start()
     {
         SetupSliders();
+        UpdateCarSprite();
+        UpdateCarStats();
     }
 
     private void SetupSliders()
     {
         acceleration.minValue = minAcceleration;
         acceleration.maxValue = maxAcceleration;
-        CarStats stats = GetCurrentCarStats();
-        acceleration.value = stats.acceleration;
+        
+        maxSpeed.minValue = minMaxSpeed;
+        maxSpeed.maxValue = maxMaxSpeed;
+
+        braking.minValue = minBraking;
+        braking.maxValue = maxBraking;
+
+        boost.minValue = minBoost;
+        boost.maxValue = maxBoost;
+
+        handling.minValue = minHandling;
+        handling.maxValue = maxHandling;
+
+        drift.minValue = minDrift;
+        drift.maxValue = maxDrift;
+
+        UpdateSliders();
     }
 
     private void UpdateSliders()
     {
         CarStats stats = GetCurrentCarStats();
         acceleration.value = stats.acceleration;
+        maxSpeed.value = stats.maxSpeed;
+        braking.value = stats.brakeFactor;
+        boost.value = stats.boostMultiplier;
+        handling.value = stats.turnSpeed;
+        drift.value = stats.drift;
+        carTypeText.text = ((CarType)currentCarType + 1).ToString();
     }
     
     public void NextCarType()
@@ -91,13 +125,14 @@ public class CarSelector : MonoBehaviour
         }
         carDisplay.sprite = newSprite;
         carOnGroundSprite.sprite = newSprite;
+        carColorText.text = ((CarColor)currentCarColor).ToString();
     }
-
+    
     private void UpdateCarStats()
     {
         CarStats newStats = GetCurrentCarStats();
         
-        carOnGroundBehaviour.SetStatValues(newStats);
+        carOnGroundBehaviour.SetStatValues((CarType)currentCarType+1, (CarColor)currentCarColor, newStats);
         UpdateSliders();
     }
 

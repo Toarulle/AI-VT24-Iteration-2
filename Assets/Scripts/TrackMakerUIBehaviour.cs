@@ -5,7 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UIBehaviour : MonoBehaviour
+public class TrackMakerUIBehaviour : MonoBehaviour
 {
     [SerializeField] private TrackMaker trackMaker;
     [SerializeField] private TrackMesh trackMesh;

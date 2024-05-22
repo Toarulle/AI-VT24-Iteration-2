@@ -11,4 +11,5 @@ public class CarStats : ScriptableObject
     public float boostMultiplier;
     public float turnSpeed;
     public float drift;
+    public AudioClip engineSound;
 }

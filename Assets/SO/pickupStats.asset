@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24a132772b5e69c43a366a47f3e0012b, type: 3}
   m_Name: pickupStats
   m_EditorClassIdentifier: 
-  acceleration: 5
-  maxSpeed: 24
+  acceleration: 3.5
+  maxSpeed: 30
   brakeFactor: 4
   boostMultiplier: 1.5
   turnSpeed: 2.2
   drift: 0.88
+  engineSound: {fileID: 8300000, guid: 80c726b7153f0f14ea204d190d143eb9, type: 3}
